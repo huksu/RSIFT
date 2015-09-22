@@ -92,8 +92,8 @@ drawImg <- function(img){
     rasterImage(img, 0,0,1,1)
 }
 
-grayImg <- function(colorImg){
-    grayImg <- myjpg[,,1]+myjpg[,,2]+myjpg[,,3] # reduce to gray
+grayImage <- function(colorImg){
+    grayImg <- colorImg[,,1]+colorImg[,,2]+colorImg[,,3] # reduce to gray
     grayImg <- imageNorm(grayImg)
     return(grayImg)
 }
@@ -131,14 +131,14 @@ laplacianPyramid <- function(img, numOctaves = 4, numScaleLevels = 5, k = sqrt(2
     sigmas <- getSigmas(numScaleLevels,sd)
     print("Sigma Values")
     print(sigmas)
-    rootImg <- grayImg
+    rootImg <- img
     
     lp <- list()
     
     for(i in c(1:numOctaves)){
         print(paste("Octave: ",i))
         octave <- array(rep(c(1:(numScaleLevels+3)), each = nrow(rootImg)*ncol(rootImg)), c(nrow(rootImg),ncol(rootImg),numScaleLevels+3))
-        print(dim(octave[,,]))
+        print(dim(octave))
         
         print(paste("Octave:", i, "Scale Level:", 1))
         octave[,,1] <- rootImg
@@ -649,7 +649,7 @@ siftDataBuilder <- function(siftDescriptors, orientedPeaks){
 SIFT <- function(imgFileName, numOctaves = 4, numScaleLevels = 5, sd = 1.6){
     ## Load the image
     myjpg <- readJPEG(imgFileName)
-    grayImg <- grayImg(myjpg)
+    grayImg <- grayImage(myjpg)
     
     ## Build the Difference-of-Gaussians pyramid
     lp <- laplacianPyramid(grayImg, numOctaves, numScaleLevels, sd)
@@ -682,4 +682,6 @@ SIFT <- function(imgFileName, numOctaves = 4, numScaleLevels = 5, sd = 1.6){
 SIFT.a <- SIFT("imgA.JPG")
 SIFT.b <- SIFT("imgB.JPG")
 
+length(SIFT.a)
+length(SIFT.b)
 
