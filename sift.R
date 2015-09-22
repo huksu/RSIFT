@@ -461,9 +461,9 @@ getStablePeaks <- function(peaks, D, numOctaves, numScaleLevels, radius = 10){
     return(stablePeaks)    
 }
 
-assignOrientationAndMagnitude <- function(lp, peaks, sd, NUMBINS = 36, RADIUSFACTOR = 3, MAGTHRESHOLD = .8){ # SIFT_ORI_SIG_FCTR
+assignOrientationAndMagnitude <- function(lp, peaks, sd, NUMBINS = 36, RADIUSFACTOR = 3, MAGTHRESHOLD = .8){ 
     
-    radiusLevel <- sd * RADIUSFACTOR #SIFT_ORI_RADIUS
+    radiusLevel <- sd * RADIUSFACTOR 
     orientedPeaks <- data.frame()
     peaks$orientation <- NA
     peaks$magnitude <- NA
@@ -646,36 +646,40 @@ siftDataBuilder <- function(siftDescriptors, orientedPeaks){
     return(siftData)
 }
 
+SIFT <- function(imgFileName, numOctaves = 4, numScaleLevels = 5, sd = 1.6){
+    ## Load the image
+    myjpg <- readJPEG(imgFileName)
+    grayImg <- grayImg(myjpg)
+    
+    ## Build the Difference-of-Gaussians pyramid
+    lp <- laplacianPyramid(grayImg, numOctaves, numScaleLevels, sd)
+    D <- differenceOfGaussianPyramid(lp, numOctaves, numScaleLevels)
+    
+    ## Scale space peak detection
+    peaks <- scaleSpacePeakDetection(D, numOctaves, numScaleLevels, sd)
+    
+    ## Accurate keypoint localization
+    localizedPeaks <- peakLocalization(peaks, D, numOctaves, numScaleLevels, sd, MAXSTEPS = 10)
+    
+    ## Eliminating Edge Responses
+    stablePeaks <- getStablePeaks(localizedPeaks, D, numOctaves, numScaleLevels)
+    
+    ## Peak Orientation Assignment
+    orientedPeaks <- assignOrientationAndMagnitude(lp, stablePeaks, sd)
+    
+    ## Generate the SIFT Descriptors (PHEW)
+    drawPeaks(grayImg,orientedPeaks, drawCircles = FALSE)
+    siftDescriptors <- generateSIFTDescriptors(lp, orientedPeaks)
+    
+    ## Combine the data into one set
+    SIFTData <- siftDataBuilder(siftDescriptors,orientedPeaks)
+    
+    return(SIFTData)
+}
 
-## Load the image
-getwd()
-#setwd("../Desktop/RFiles/")
-myjpg <- readJPEG("mtg.jpg")
-grayImg <- grayImg(myjpg)
-#drawImg(grayImg)
 
-## Build the Difference-of-Gaussians pyramid
-numOctaves <- 4
-numScaleLevels <- 5
-sd <- 1.6
-lp <- laplacianPyramid(grayImg, numOctaves, numScaleLevels, sd)
-D <- differenceOfGaussianPyramid(lp, numOctaves, numScaleLevels)
 
-## Scale space peak detection
-peaks <- scaleSpacePeakDetection(D, numOctaves, numScaleLevels, sd)
+SIFT.a <- SIFT("imgA.JPG")
+SIFT.b <- SIFT("imgB.JPG")
 
-## Accurate keypoint localization
-localizedPeaks <- peakLocalization(peaks, D, numOctaves, numScaleLevels, sd, MAXSTEPS = 10)
 
-## Eliminating Edge Responses
-stablePeaks <- getStablePeaks(localizedPeaks, D, numOctaves, numScaleLevels)
-
-## Peak Orientation Assignment
-orientedPeaks <- assignOrientationAndMagnitude(lp, stablePeaks, sd)
-
-## Generate the SIFT Descriptors (PHEW)
-drawPeaks(grayImg,orientedPeaks, drawCircles = FALSE)
-siftDescriptors <- generateSIFTDescriptors(lp, orientedPeaks)
-
-## Combine the data into one set
-SIFTData <- siftDataBuilder(siftDescriptors,orientedPeaks)
